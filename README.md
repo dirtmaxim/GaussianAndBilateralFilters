@@ -1,4 +1,4 @@
-# 3DMiniViewer - simple 3D engine
+# GaussianAndBilateralFilters - image processing filters
 
 ##### Implementation of Bilateral filter, Gaussian filter and its derivatives by X and Y. It was written for educational purposes, so it can help you to understand how to process images with these kind of filters.
 
