@@ -1,0 +1,19 @@
+.button {
+    -fx-padding: 5 12 5 12;
+    -fx-background-color: #5ac0ce;
+    -fx-font-size: 9pt;
+    -fx-text-fill: #ffffff;
+}
+.button:hover {
+    -fx-background-color: #4a9da8;
+}
+.button:pressed {
+    -fx-background-color: #316970;
+}
+.button:focused {
+    -fx-border-width: 0.5;
+}
+.button:disabled {
+    -fx-opacity: 0.8;
+    -fx-background-color: #1b393d;
+}
