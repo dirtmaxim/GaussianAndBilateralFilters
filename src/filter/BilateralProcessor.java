@@ -64,7 +64,7 @@ public class BilateralProcessor {
      * Test shows that this approach gives fourfold performance improvement.
      */
     public void createIntensityVector() {
-
+        
         // It needs to increase performance. Compute intensity difference for each possible value.
         // There are 442 values since filter measure intensity difference as
         // √((R2 - R1)^2 + (G2 - G1)^2 + (B2 - B1)^2). So, maximal value is √(255^2 + 255^2 + 255^2). That is 442.
@@ -121,7 +121,8 @@ public class BilateralProcessor {
 
                             // Translate kernel image coordinates into local gaussianKernelMatrix coordinates and
                             // calculate weight of current kernel position.
-                            kernelPositionWeight = gaussianKernelMatrix[x - i + halfKernelSize][y - j + halfKernelSize] * intensityVector[getIntensityDifference(kernelCenterIntensity, kernelPositionIntensity)];
+                            kernelPositionWeight = gaussianKernelMatrix[x - i + halfKernelSize][y - j + halfKernelSize] *
+                                    intensityVector[getIntensityDifference(kernelCenterIntensity, kernelPositionIntensity)];
 
                             // Process each color component separately.
                             // It is necessary to make filter work with color images.
