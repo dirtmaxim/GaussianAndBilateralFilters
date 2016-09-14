@@ -41,13 +41,13 @@ public class BilateralFilter {
      * @return Gaussian value
      */
     private float gaussianFunction(int x, int y) {
-        return (float) Math.exp(-(Math.pow(x, 2) + Math.pow(y, 2)) / (2 * Math.pow(distanceSigma, 2)));
+        return (float) Math.exp(-(x * x + y * y) / (2 * distanceSigma * distanceSigma));
     }
 
     /**
      * Calculate Gaussian kernel for kernelSize range.
      */
-    public void createGaussianKernel() {
+    private void createGaussianKernel() {
         gaussianKernelMatrix = new float[kernelSize][kernelSize];
         int halfKernelSize = (int) Math.floor(kernelSize / 2);
 
@@ -63,7 +63,7 @@ public class BilateralFilter {
      * Calculate intensity vector for performance reason.
      * Test shows that this approach gives fourfold performance improvement.
      */
-    public void createIntensityVector() {
+    private void createIntensityVector() {
 
         // It needs to increase performance. Compute intensity difference for each possible value.
         // There are 442 values since filter measure intensity difference as
@@ -71,7 +71,7 @@ public class BilateralFilter {
         intensityVector = new float[442];
 
         for (int i = 0; i < intensityVector.length; i++) {
-            intensityVector[i] = (float) Math.exp(-((i) / (2 * Math.pow(intensitySigma, 2))));
+            intensityVector[i] = (float) Math.exp(-((i) / (2 * intensitySigma * intensitySigma)));
         }
     }
 
@@ -83,16 +83,13 @@ public class BilateralFilter {
      * @return Difference between intensity of colors
      */
     private int getIntensityDifference(int firstColor, int secondColor) {
-        int firstR = (firstColor >> 16) & 0xFF;
-        int firstG = (firstColor >> 8) & 0xFF;
-        int firstB = firstColor & 0xFF;
-        int secondR = (secondColor >> 16) & 0xFF;
-        int secondG = (secondColor >> 8) & 0xFF;
-        int secondB = secondColor & 0xFF;
+        int rDifference = (secondColor >> 16 & 0xFF) - (firstColor >> 16) & 0xFF;
+        int gDifference = (secondColor >> 8 & 0xFF) - (firstColor >> 8) & 0xFF;
+        int bDifference = (secondColor & 0xFF) - (firstColor & 0xFF);
 
         // Calculate intensity difference. It is used in not Gaussian part of bilateral filter formula.
-        return (int) (Math.sqrt(Math.pow(secondR - firstR, 2) + Math.pow(secondG - firstG, 2) +
-                Math.pow(secondB - firstB, 2)));
+        return (int) (Math.sqrt(rDifference * rDifference + gDifference * gDifference +
+                bDifference * bDifference));
     }
 
     /**

@@ -42,8 +42,8 @@ public class EdgeDetectionFilter {
      * @return Compute value by derivative function
      */
     private float gaussianDerivativeByXFunction(int x, int y, float sigma) {
-        return (float) (-x / Math.pow(sigma, 2) * (1 / (2 * Math.PI * Math.pow(sigma, 2)) * Math.exp(-(Math.pow(x, 2) +
-                Math.pow(y, 2)) / (2 * Math.pow(sigma, 2)))));
+        return (float) (-x / (sigma * sigma) * (1 / (2 * Math.PI * (sigma * sigma)) * Math.exp(-((x * x) +
+                (y * y)) / (2 * (sigma * sigma)))));
     }
 
     /**
@@ -55,8 +55,8 @@ public class EdgeDetectionFilter {
      * @return Compute value by derivative function
      */
     private float gaussianDerivativeByYFunction(int x, int y, float sigma) {
-        return (float) (-y / Math.pow(sigma, 2) * (1 / (2 * Math.PI * Math.pow(sigma, 2)) * Math.exp(-(Math.pow(x, 2) +
-                Math.pow(y, 2)) / (2 * Math.pow(sigma, 2)))));
+        return (float) (-y / (sigma * sigma) * (1 / (2 * Math.PI * (sigma * sigma)) * Math.exp(-((x * x) +
+                (y * y)) / (2 * (sigma * sigma)))));
     }
 
     /**
@@ -66,15 +66,17 @@ public class EdgeDetectionFilter {
      */
     private float[] createKernel(DerivativeType derivativeType) {
 
+        int kernelSizeSquared = kernelSize * kernelSize;
         // We are using one dimension array because of java.awt.bufferedImage.
         // Kernel takes Gaussian two dimension matrix as one dimension array.
-        float[] kernelMatrix = new float[(int) Math.pow(kernelSize, 2)];
+        float[] kernelMatrix = new float[kernelSizeSquared];
         int halfKernelSize = (int) Math.floor(kernelSize / 2);
         float amount = 0;
 
         for (int i = halfKernelSize; i > -halfKernelSize - 1; i--) {
             for (int j = halfKernelSize; j > -halfKernelSize - 1; j--) {
                 int index = (halfKernelSize - i) * kernelSize + (halfKernelSize - j);
+
                 if (derivativeType == DerivativeType.X) {
                     kernelMatrix[index] = gaussianDerivativeByXFunction(j, i, sigma);
                 } else if (derivativeType == DerivativeType.Y) {
@@ -91,7 +93,7 @@ public class EdgeDetectionFilter {
         }
 
         // Normalization.
-        for (int i = 0; i < Math.pow(kernelSize, 2); i++) {
+        for (int i = 0; i < kernelSizeSquared; i++) {
             kernelMatrix[i] /= amount;
         }
 

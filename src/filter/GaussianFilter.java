@@ -28,7 +28,7 @@ public class GaussianFilter {
      * @return Value that follows the law of normal distribution
      */
     private float gaussianFunction(int x) {
-        return (float) (1 / (sigma * Math.sqrt(2 * Math.PI)) * Math.exp(-Math.pow(x, 2) / (2 * Math.pow(sigma, 2))));
+        return (float) (1 / (sigma * Math.sqrt(2 * Math.PI)) * Math.exp(-(x * x) / (2 * (sigma * sigma))));
     }
 
     /**
