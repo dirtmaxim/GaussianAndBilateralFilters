@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
  * -----------------------------------------------------------------------------------------------------------------------------------------
  * ∑ e^(-(distanceA^2 + distanceB^2) / 2 * σDistance^2) * e^(√((intensityCenter - intensityPosition)^2) / 2 * σIntensity^2).
  */
-public class BilateralProcessor {
+public class BilateralFilter {
     private float distanceSigma;
     private float intensitySigma;
     private BufferedImage bufferedImage;
@@ -22,7 +22,7 @@ public class BilateralProcessor {
     // It is filled by computing intensity part of bilateral function.
     private float intensityVector[];
 
-    public BilateralProcessor(Image image, float distanceSigma, float intensitySigma) {
+    public BilateralFilter(Image image, float distanceSigma, float intensitySigma) {
         this.bufferedImage = SwingFXUtils.fromFXImage(image, null);
         this.distanceSigma = distanceSigma;
         this.intensitySigma = intensitySigma;
@@ -64,7 +64,7 @@ public class BilateralProcessor {
      * Test shows that this approach gives fourfold performance improvement.
      */
     public void createIntensityVector() {
-        
+
         // It needs to increase performance. Compute intensity difference for each possible value.
         // There are 442 values since filter measure intensity difference as
         // √((R2 - R1)^2 + (G2 - G1)^2 + (B2 - B1)^2). So, maximal value is √(255^2 + 255^2 + 255^2). That is 442.
@@ -101,6 +101,7 @@ public class BilateralProcessor {
      * @return Processed image
      */
     public Image filterImage() {
+        bufferedImage = ImageTool.addBorder(bufferedImage, kernelSize);
         for (int x = 0; x < bufferedImage.getWidth(); x++) {
             for (int y = 0; y < bufferedImage.getHeight(); y++) {
                 float numeratorSumR = 0;
@@ -135,13 +136,13 @@ public class BilateralProcessor {
                 }
 
                 // Normalization by division and combination bit color value from separate components
-                // into compound 32-bits value. Then set new value.
-                bufferedImage.setRGB(x, y, (((int) (numeratorSumR / denominatorSum) & 0xFF) << 16) |
+                // into compound 32-bits value, delete an alpha channel. Then set new value.
+                bufferedImage.setRGB(x, y, 0xFF000000 | (((int) (numeratorSumR / denominatorSum) & 0xFF) << 16) |
                         (((int) (numeratorSumG / denominatorSum) & 0xFF) << 8) |
                         ((int) (numeratorSumB / denominatorSum) & 0xFF));
             }
         }
 
-        return SwingFXUtils.toFXImage(bufferedImage, null);
+        return SwingFXUtils.toFXImage(ImageTool.deleteBorder(bufferedImage, kernelSize), null);
     }
 }

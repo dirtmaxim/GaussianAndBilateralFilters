@@ -11,10 +11,10 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("view.fxml"));
-        primaryStage.setTitle("GaussianAndBilateralFilters");
-        primaryStage.setScene(new Scene(root, 800, 600));
-        primaryStage.setMinWidth(800);
-        primaryStage.setMinHeight(600);
+        primaryStage.setTitle("ImageMiniFilters");
+        primaryStage.setScene(new Scene(root, 870, 650));
+        primaryStage.setMinWidth(870);
+        primaryStage.setMinHeight(650);
         primaryStage.show();
     }
 

@@ -18,8 +18,10 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ConvolveOp;
+import java.awt.image.Kernel;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -77,8 +79,9 @@ public class Controller implements Initializable {
     private String image1Extension;
     private String image2Extension;
     private String image3Extension;
-    private GaussianProcessor gaussianProcessor;
-    private BilateralProcessor bilateralProcessor;
+    private GaussianFilter gaussianFilter;
+    private BilateralFilter bilateralFilter;
+    private EdgeDetectionFilter edgeDetectionFilter;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -129,12 +132,12 @@ public class Controller implements Initializable {
                 gaussianDistanceSigma = null;
             }
 
-            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0 && originalImage != null) {
+            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0.1 && originalImage != null) {
                 image1Extension = image0Extension;
-                gaussianProcessor = new GaussianProcessor(originalImage, gaussianDistanceSigma);
+                gaussianFilter = new GaussianFilter(originalImage, gaussianDistanceSigma);
                 borderPane1.setCenter(inProcess);
                 new Thread(() -> {
-                    imageView1 = new ImageView(gaussianProcessor.blurImage(new GaussianOriginalFunction()));
+                    imageView1 = new ImageView(gaussianFilter.filterImage());
                     imageView1.setPreserveRatio(true);
                     imageView1.setSmooth(true);
                     imageView1.fitWidthProperty().bind(gridPaneImage1.widthProperty());
@@ -161,12 +164,12 @@ public class Controller implements Initializable {
                 gaussianDistanceSigma = null;
             }
 
-            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0 && originalImage != null) {
+            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0.4 && originalImage != null) {
                 image2Extension = image0Extension;
-                gaussianProcessor = new GaussianProcessor(originalImage, gaussianDistanceSigma);
+                edgeDetectionFilter = new EdgeDetectionFilter(originalImage, gaussianDistanceSigma);
                 borderPane2.setCenter(inProcess);
                 new Thread(() -> {
-                    imageView2 = new ImageView(gaussianProcessor.blurImage(new GaussianDerivativeByXFunction()));
+                    imageView2 = new ImageView(edgeDetectionFilter.filterImage(DerivativeType.X));
                     imageView2.setPreserveRatio(true);
                     imageView2.setSmooth(true);
                     imageView2.fitWidthProperty().bind(gridPaneImage2.widthProperty());
@@ -190,12 +193,12 @@ public class Controller implements Initializable {
                 gaussianDistanceSigma = null;
             }
 
-            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0 && originalImage != null) {
+            if (gaussianDistanceSigma != null && gaussianDistanceSigma > 0.4 && originalImage != null) {
                 image3Extension = image0Extension;
-                gaussianProcessor = new GaussianProcessor(originalImage, gaussianDistanceSigma);
+                edgeDetectionFilter = new EdgeDetectionFilter(originalImage, gaussianDistanceSigma);
                 borderPane3.setCenter(inProcess);
                 new Thread(() -> {
-                    imageView3 = new ImageView(gaussianProcessor.blurImage(new GaussianDerivativeByYFunction()));
+                    imageView3 = new ImageView(edgeDetectionFilter.filterImage(DerivativeType.Y));
                     imageView3.setPreserveRatio(true);
                     imageView3.setSmooth(true);
                     imageView3.fitWidthProperty().bind(gridPaneImage3.widthProperty());
@@ -226,13 +229,13 @@ public class Controller implements Initializable {
                 bilateralIntensitySigma = null;
             }
 
-            if (bilateralDistanceSigma != null && bilateralDistanceSigma > 0 && originalImage != null) {
-                if (bilateralIntensitySigma != null && bilateralIntensitySigma > 0) {
+            if (bilateralDistanceSigma != null && bilateralDistanceSigma > 0.1 && originalImage != null) {
+                if (bilateralIntensitySigma != null && bilateralIntensitySigma > 0.1) {
                     image0BilateralExtension = image0Extension;
-                    bilateralProcessor = new BilateralProcessor(originalImage, bilateralDistanceSigma, bilateralIntensitySigma);
+                    bilateralFilter = new BilateralFilter(originalImage, bilateralDistanceSigma, bilateralIntensitySigma);
                     borderPane0.setCenter(inProcess);
                     new Thread(() -> {
-                        imageView0Bilateral = new ImageView(bilateralProcessor.filterImage());
+                        imageView0Bilateral = new ImageView(bilateralFilter.filterImage());
                         imageView0Bilateral.setPreserveRatio(true);
                         imageView0Bilateral.setSmooth(true);
                         imageView0Bilateral.fitWidthProperty().bind(gridPaneImage0.widthProperty());
@@ -264,10 +267,10 @@ public class Controller implements Initializable {
                         saveImage(directory, "Processed image (Gaussian filter).", image1Extension, imageView1);
                     }
                     if (imageView2 != null) {
-                        saveImage(directory, "Processed image (Gaussian D(x) filter).", image2Extension, imageView2);
+                        saveImage(directory, "Processed image (Edge detection G(x) filter).", image2Extension, imageView2);
                     }
                     if (imageView3 != null) {
-                        saveImage(directory, "Processed image (Gaussian D(y) filter).", image3Extension, imageView3);
+                        saveImage(directory, "Processed image (Edge detection G(y) filter).", image3Extension, imageView3);
                     }
                     Platform.runLater(() -> {
                         buttonSave.setText("Done");
@@ -296,19 +299,11 @@ public class Controller implements Initializable {
         return null;
     }
 
-    private BufferedImage deleteAlphaChannel(BufferedImage imageRGBA) {
-        BufferedImage imageRGB = new BufferedImage(imageRGBA.getWidth(), imageRGBA.getHeight(), BufferedImage.OPAQUE);
-        Graphics2D graphics = imageRGB.createGraphics();
-        graphics.drawImage(imageRGBA, 0, 0, null);
-        graphics.dispose();
-        return imageRGB;
-    }
-
     private void saveImage(File directory, String imageName, String imageExtension, ImageView imageView) {
         try {
             BufferedImage processedImage;
             if (imageExtension.equals("jpg") || imageExtension.equals("jpeg")) {
-                processedImage = deleteAlphaChannel(SwingFXUtils.fromFXImage(imageView.getImage(), null));
+                processedImage = ImageTool.deleteAlphaChannel(SwingFXUtils.fromFXImage(imageView.getImage(), null));
             } else {
                 processedImage = SwingFXUtils.fromFXImage(imageView.getImage(), null);
             }
